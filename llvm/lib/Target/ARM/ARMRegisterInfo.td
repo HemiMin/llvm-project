@@ -220,7 +220,7 @@ def ZR  : ARMReg<15, "zr">,  DwarfRegNum<[15]>;
 // r11 == Frame Pointer (arm-style backtraces)
 // r10 == Stack Limit
 //
-def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
+def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 10),
                                                SP, LR, PC)> {
   // Allocate LR as the first CSR since it is always saved anyway.
   // For Thumb1 mode, we don't want to allocate hi regs at all, as we don't
@@ -228,7 +228,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
   // some point, we can go back to using the above allocation orders for the
   // Thumb1 instructions that know how to use hi regs.
   let AltOrders = [(add LR, GPR), (trunc GPR, 8),
-                   (add (trunc GPR, 8), R12, LR, (shl GPR, 8))];
+                   (add (trunc GPR, 8), LR, (shl GPR, 8))];
   let AltOrderSelect = [{
       return MF.getSubtarget<ARMSubtarget>().getGPRAllocationOrder(MF);
   }];
@@ -238,7 +238,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
 // Register set that excludes registers that are reserved for procedure calls.
 // This is used for pseudo-instructions that are actually implemented using a
 // procedure call.
-def GPRnoip : RegisterClass<"ARM", [i32], 32, (sub GPR, R12, LR)> {
+def GPRnoip : RegisterClass<"ARM", [i32], 32, (sub GPR, LR)> {
   // Allocate LR as the first CSR since it is always saved anyway.
   // For Thumb1 mode, we don't want to allocate hi regs at all, as we don't
   // know how to spill them. If we make our prologue/epilogue code smarter at
@@ -257,7 +257,7 @@ def GPRnoip : RegisterClass<"ARM", [i32], 32, (sub GPR, R12, LR)> {
 // useful for disassembly.
 def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
   let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8),
-                   (add (trunc GPRnopc, 8), R12, LR, (shl GPRnopc, 8))];
+                   (add (trunc GPRnopc, 8), LR, (shl GPRnopc, 8))];
   let AltOrderSelect = [{
       return MF.getSubtarget<ARMSubtarget>().getGPRAllocationOrder(MF);
   }];
@@ -315,7 +315,7 @@ def GPRlr : RegisterClass<"ARM", [i32], 32, (add LR)>;
 // via the BadReg() pseudo-code description.
 def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
   let AltOrders = [(add LR, rGPR), (trunc rGPR, 8),
-                   (add (trunc rGPR, 8), R12, LR, (shl rGPR, 8))];
+                   (add (trunc rGPR, 8), LR, (shl rGPR, 8))];
   let AltOrderSelect = [{
       return MF.getSubtarget<ARMSubtarget>().getGPRAllocationOrder(MF);
   }];
@@ -352,7 +352,7 @@ def hGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, tGPR)> {
 // to the saved value before the tail call, which would clobber a call address.
 // Note, getMinimalPhysRegClass(R0) returns tGPR because of the names of
 // this class and the preceding one(!)  This is what we want.
-def tcGPR : RegisterClass<"ARM", [i32], 32, (add R0, R1, R2, R3, R12)> {
+def tcGPR : RegisterClass<"ARM", [i32], 32, (add R0, R1, R2, R3)> {
   let AltOrders = [(and tcGPR, tGPR)];
   let AltOrderSelect = [{
       return MF.getSubtarget<ARMSubtarget>().isThumb1Only();
@@ -368,7 +368,7 @@ def tGPROdd : RegisterClass<"ARM", [i32], 32, (add R1, R3, R5, R7, R9, R11)> {
     "operand must be an odd-numbered register in range [r1,r11]";
 }
 
-def tGPREven : RegisterClass<"ARM", [i32], 32, (add R0, R2, R4, R6, R8, R10, R12, LR)> {
+def tGPREven : RegisterClass<"ARM", [i32], 32, (add R0, R2, R4, R6, R8, R10, LR)> {
   let AltOrders = [(and tGPREven, tGPR)];
   let AltOrderSelect = [{
       return MF.getSubtarget<ARMSubtarget>().isThumb1Only();
